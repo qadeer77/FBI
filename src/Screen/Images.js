@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, Button, Image, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, Button, Image, ScrollView, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-simple-toast';
 import { launchCamera } from 'react-native-image-picker';
 
-const Images = () => {
+const Images = ({ navigation }) => {
     const [images, setImages] = useState([]);
 
     const handleCameraLaunch = () => {
@@ -43,7 +43,10 @@ const Images = () => {
         <View style={styles.container}>
             <Text style={styles.title}>Select up to 5 images</Text>
             <View style={styles.buttonContainer}>
-                <Button title="Take Photo" onPress={handleCameraLaunch} disabled={images.length >= 5} />
+                {/* <Button title="Take Photo" onPress={handleCameraLaunch} disabled={images.length >= 5} /> */}
+                <TouchableOpacity style={styles.loginButton} onPress={handleCameraLaunch} disabled={images.length >= 5}>
+                    <Text style={styles.loginButtonText}>Take Photo</Text>
+                </TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 {images.map((imageUri, index) => (
@@ -51,6 +54,15 @@ const Images = () => {
                 ))}
             </ScrollView>
             <Text style={styles.imageCount}>Images Selected: {images.length}/5</Text>
+            {images.length === 5 && (
+                <View style={styles.nextButtonContainer}>
+                    {/* <Button title="Next" onPress={() => navigation.replace('OTP')} /> */}
+                    <TouchableOpacity style={styles.loginButton} onPress={() => navigation.replace('OTP')}>
+                        <Text style={styles.loginButtonText}>Next</Text>
+                    </TouchableOpacity>
+                </View>
+
+            )}
         </View>
     );
 };
@@ -79,6 +91,20 @@ const styles = StyleSheet.create({
     imageCount: {
         textAlign: 'center',
         marginTop: 10,
+    },
+    nextButtonContainer: {
+        marginTop: 20,
+    },
+    loginButton: {
+        backgroundColor: '#114e95',
+        borderRadius: 15,
+        paddingVertical: 12,
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    loginButtonText: {
+        color: 'white',
+        fontSize: 18,
     },
 });
 

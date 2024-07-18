@@ -1,0 +1,16 @@
+export const ImagesPath = {
+    SplashScreen: require(`../../Assets/superMarket.jpg`),
+    loginImage: require(`../../Assets/loginImage.png`),
+    Adult: require(`../../Assets/Adult-and-senior-eye-exams-icon.png`),
+    eyeImage: require(`../../Assets/eyeImage.png`),
+    eyeSlashImage: require(`../../Assets/eyeSlashImage.png`),
+    passwordImages: require(`../../Assets/passwordImages.png`),
+    emailImages: require(`../../Assets/emailImages.webp`),
+    firstName: require(`../../Assets/firstName.png`),
+    creditCardNumber: require(`../../Assets/creditCardNumber.png`),
+    arrowBack: require(`../../Assets/arrowBack.webp`),
+    facebookImages: require(`../../Assets/facebookImages.png`),
+    GoogleImages: require(`../../Assets/GoogleImages.png`),
+    supermarket2: require(`../../Assets/supermarket2.png`),
+    manSuperMarket: require(`../../Assets/manSuperMarket.png`),
+}
