@@ -25,11 +25,40 @@ const SplashScreen = ({ navigation }) => {
         ));
     };
 
+    const renderText = () => {
+        switch (step) {
+            case 0:
+                return {
+                    heading: 'Welcome to Our App',
+                    paragraph: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
+                };
+            case 1:
+                return {
+                    heading: 'Explore Features',
+                    paragraph: 'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+                };
+            case 2:
+                return {
+                    heading: 'Get Started',
+                    paragraph: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris ex ea consequat.'
+                };
+            default:
+                return {
+                    heading: '',
+                    paragraph: ''
+                };
+        }
+    };
+
+    const { heading, paragraph } = renderText();
+
     return (
         <View style={styles.container}>
             {step === 0 && <Image source={ImagesPath.SplashScreen} style={styles.image} />}
             {step === 1 && <Image source={ImagesPath.supermarket2} style={styles.image} />}
             {step === 2 && <Image source={ImagesPath.manSuperMarket} style={styles.image} />}
+            <Text style={styles.heading}>{heading}</Text>
+            <Text style={styles.paragraph}>{paragraph}</Text>
             <View style={styles.circlesContainer}>
                 {renderCircles()}
             </View>
@@ -48,10 +77,27 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     image: {
-        height: '100%',
-        width: '100%',
+        height: '50%',
+        width: '50%',
         resizeMode: 'contain',
         position: 'absolute',
+    },
+    heading: {
+        position: 'absolute',
+        bottom: 260,
+        paddingHorizontal: 20,
+        textAlign: 'center',
+        fontSize: 25,
+        fontWeight: 'bold',
+        color: '#114e95',
+    },
+    paragraph: {
+        position: 'absolute',
+        bottom: 220,
+        paddingHorizontal: 20,
+        textAlign: 'center',
+        fontSize: 16,
+        color: 'black',
     },
     circlesContainer: {
         position: 'absolute',

@@ -75,6 +75,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         padding: 16,
+        backgroundColor: 'white'
     },
     backButton: {
         position: 'absolute',
@@ -144,6 +145,14 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: 'black',
         backgroundColor: '#f9fafc',
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
     title1: {
         fontSize: 32,

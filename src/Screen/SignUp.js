@@ -261,6 +261,7 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         justifyContent: 'center',
         padding: 16,
+        backgroundColor: 'white'
     },
     header: {
         marginTop: 40

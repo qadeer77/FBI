@@ -13,4 +13,5 @@ export const ImagesPath = {
     GoogleImages: require(`../../Assets/GoogleImages.png`),
     supermarket2: require(`../../Assets/supermarket2.png`),
     manSuperMarket: require(`../../Assets/manSuperMarket.png`),
+    logo: require(`../../Assets/logo.jpg`),
 }

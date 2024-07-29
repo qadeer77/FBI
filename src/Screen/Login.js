@@ -70,7 +70,7 @@ const Login = ({ navigation }) => {
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps='handled' behavior="padding" >
             <View style={styles.container}>
                 <View style={{ justifyContent: 'center', alignItems: 'center', marginBottom: 50 }}>
-                    <Image source={ImagesPath.Adult} style={styles.image} />
+                    <Image source={ImagesPath.logo} style={styles.image} />
                 </View>
                 <View style={styles.header}>
                     <Text style={styles.title}>Login</Text>
@@ -133,6 +133,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         padding: 16,
+        backgroundColor: 'white'
     },
     inputWrapper: {
         position: 'relative',
@@ -148,8 +149,8 @@ const styles = StyleSheet.create({
     },
     image: {
         resizeMode: 'cover',
-        width: 100,
-        height: 100
+        width: 200,
+        height: 200
     },
     text: {
         fontSize: 50,
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     forgotPasswordLink: {
-        color: '#114e95',
+        color: '#F1565D',
         textAlign: 'right',
         marginBottom: 12,
     },
