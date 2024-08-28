@@ -5,6 +5,8 @@ import Toast from 'react-native-simple-toast';
 import { ImagesPath } from '../Constant/ImagesPath/ImagesPath';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import moment from 'moment';
+import api from '../server/api';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 
 const SignUp = ({ navigation }) => {
     const [firstName, setFirstName] = useState('');
@@ -19,9 +21,21 @@ const SignUp = ({ navigation }) => {
     const [creditCardCVC, setCreditCardCVC] = useState('');
     const [keyboardOpen, setKeyboardOpen] = useState(false);
 
-    const handleSignUp = () => {
+    GoogleSignin.configure({
+        webClientId: '824330957680-c0hag4cl1dm1g3gq9lnkq6022okk2qdt.apps.googleusercontent.com',
+        offlineAccess: true,
+    });
+
+    const handleSignUp = async () => {
         if (validateInputs()) {
-            navigation.replace('Images')
+            try {
+                await api.signup({ firstName, lastName, email, password, dob, creditCardNumber, creditCardExpiry, creditCardCVC })
+                Toast.show('Signup successful!', Toast.LONG);
+                // navigation.replace('Images')
+                navigation.replace('OTP')
+            } catch (error) {
+                Toast.show('Signup failed. Please try again.', Toast.LONG);
+            }
         }
     };
 
@@ -119,6 +133,33 @@ const SignUp = ({ navigation }) => {
     const handleCreditCardExpiryConfirm = (date) => {
         setCreditCardExpiry(moment(date).format('MM/YY'));
         setCreditCardExpiryPickerVisible(false);
+    };
+
+    const handleGoogle = async () => {
+        try {
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
+            const idToken = userInfo.idToken;
+            const userData = await api.signGoogle(idToken);
+            console.log('Google Sign-In successful:', userData);
+            showToast('Google Sign-In successful!');
+            navigation.replace('Login'); 
+
+        } catch (error) {
+            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+                console.log('User cancelled the login');
+                showToast('Sign-In cancelled');
+            } else if (error.code === statusCodes.IN_PROGRESS) {
+                console.log('Sign-in is in progress already');
+                showToast('Sign-In is in progress');
+            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+                console.log('Play services are not available');
+                showToast('Play services are not available');
+            } else {
+                console.error('Google sign-in error:', error);
+                showToast('Google Sign-In failed. Please try again.');
+            }
+        }
     };
 
     return (
@@ -244,12 +285,10 @@ const SignUp = ({ navigation }) => {
                 </TouchableOpacity>
                 <Text style={{ color: 'black', textAlign: 'center', marginTop: 10 }}>Or Sign Up in with</Text>
                 <View style={styles.googleContainer}>
-                    <TouchableOpacity style={[styles.fgaSubContainer, { marginRight: 15 }]}>
+                    <TouchableOpacity style={[styles.fgaSubContainer, { marginRight: 15 }]} onPress={handleGoogle}>
                         <Image source={ImagesPath.GoogleImages} style={styles.loginImages} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.fgaSubContainer, { marginRight: 15 }]}>
-                        <Image source={ImagesPath.facebookImages} style={styles.loginImages} />
-                    </TouchableOpacity>
+                    
                 </View>
             </View>
         </ScrollView>

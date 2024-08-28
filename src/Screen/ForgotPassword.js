@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TextInput, Button, Text, Image, ScrollView, Keyboard, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TextInput, Text, Image, ScrollView, Keyboard, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-simple-toast';
 import { ImagesPath } from '../Constant/ImagesPath/ImagesPath';
+import api from '../server/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ForgotPassword = ({ navigation }) => {
     const [keyboardOpen, setKeyboardOpen] = useState(false);
-    const [password, setPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [email, setEmail] = useState('');
 
     useEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener(
@@ -30,15 +33,30 @@ const ForgotPassword = ({ navigation }) => {
         }
     }, []);
 
-    const handleNext = () => {
-        if (password !== confirmPassword) {
+    useEffect(() => {
+        const fetchData = async () => {
+            const user = await AsyncStorage.getItem('userData');
+            if (user) {
+                const parsedUser = JSON.parse(user);
+                setEmail(parsedUser.user.email);
+            }
+        }
+
+        fetchData()
+    }, [])
+
+    const handleNext = async () => {
+        if (newPassword !== confirmPassword) {
             Toast.show('Passwords do not match');
             return;
         }
-
-        // Add password reset logic here
-
-        navigation.replace('Login');
+        try {
+            await api.resetPassword({ email, newPassword, confirmPassword });
+            Toast.show('Password reset successful');
+            navigation.replace('Login');
+        } catch (error) {
+            Toast.show('An error occurred while resetting the password');
+        }
     };
 
     return (
@@ -58,17 +76,17 @@ const ForgotPassword = ({ navigation }) => {
                         </View>
                         <TextInput
                             style={styles.input}
-                            placeholder="Password"
-                            value={password}
+                            placeholder="New Password"
+                            value={newPassword}
                             placeholderTextColor="black"
-                            onChangeText={setPassword}
-                            secureTextEntry={!showPassword}
+                            onChangeText={setNewPassword}
+                            secureTextEntry={!showNewPassword}
                         />
                         <TouchableOpacity
                             style={styles.passwordToggle}
-                            onPress={() => setShowPassword(!showPassword)}
+                            onPress={() => setShowNewPassword(!showNewPassword)}
                         >
-                            <Image source={showPassword ? ImagesPath.eyeImage : ImagesPath.eyeSlashImage} />
+                            <Image source={showNewPassword ? ImagesPath.eyeImage : ImagesPath.eyeSlashImage} />
                         </TouchableOpacity>
                     </View>
                     <View style={styles.inputWrapper}>
@@ -77,7 +95,7 @@ const ForgotPassword = ({ navigation }) => {
                         </View>
                         <TextInput
                             style={styles.input}
-                            placeholder="Confirm Password"
+                            placeholder="Confirm New Password"
                             value={confirmPassword}
                             placeholderTextColor="black"
                             onChangeText={setConfirmPassword}

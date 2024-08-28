@@ -2,9 +2,13 @@ import React, { useState } from 'react';
 import { StyleSheet, View, Text, Button, Image, ScrollView, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-simple-toast';
 import { launchCamera } from 'react-native-image-picker';
+import api from '../server/api';
+import { useNavigation } from '@react-navigation/native';
 
-const Images = ({ navigation }) => {
+const Images = () => {
     const [images, setImages] = useState([]);
+
+    const navigation = useNavigation()
 
     const handleCameraLaunch = () => {
         if (images.length >= 5) {
@@ -34,16 +38,24 @@ const Images = ({ navigation }) => {
     };
 
     const validateImage = (asset) => {
-        // Example validation: check image dimensions
         const { width, height } = asset;
-        return width >= 400 && height >= 400; // Example minimum dimensions
+        return width >= 400 && height >= 400;
     };
+
+    const handleNext = async () => {
+        try {
+            await api.uploadImage(images)
+            Toast.show('Image Succfully Uploaded!', Toast.LONG);
+            navigation.navigate('Login');
+        } catch (error) {
+            Toast.show('Image Uploaded failed. Please try again.', Toast.LONG);
+        }
+    }
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Select up to 5 images</Text>
             <View style={styles.buttonContainer}>
-                {/* <Button title="Take Photo" onPress={handleCameraLaunch} disabled={images.length >= 5} /> */}
                 <TouchableOpacity style={styles.loginButton} onPress={handleCameraLaunch} disabled={images.length >= 5}>
                     <Text style={styles.loginButtonText}>Take Photo</Text>
                 </TouchableOpacity>
@@ -56,8 +68,7 @@ const Images = ({ navigation }) => {
             <Text style={styles.imageCount}>Images Selected: {images.length}/5</Text>
             {images.length === 5 && (
                 <View style={styles.nextButtonContainer}>
-                    {/* <Button title="Next" onPress={() => navigation.replace('OTP')} /> */}
-                    <TouchableOpacity style={styles.loginButton} onPress={() => navigation.replace('OTP')}>
+                    <TouchableOpacity style={styles.loginButton} onPress={handleNext}>
                         <Text style={styles.loginButtonText}>Next</Text>
                     </TouchableOpacity>
                 </View>

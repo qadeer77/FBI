@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "321347005874",
+    "project_id": "fbis-56227",
+    "storage_bucket": "fbis-56227.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:321347005874:android:e5573972bd3ac330d148ab",
+        "android_client_info": {
+          "package_name": "com.fbi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcl_xeW5lmbs25LUTW9mftmODftjhMOnA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

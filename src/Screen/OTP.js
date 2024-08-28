@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, TextInput, Button, Text, Image, ScrollView, Keyboard, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-simple-toast';
 import { ImagesPath } from '../Constant/ImagesPath/ImagesPath';
+import api from '../server/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const OTP = ({ navigation }) => {
     const [keyboardOpen, setKeyboardOpen] = useState(false);
-    const [otp, setOtp] = useState(['', '', '', '']);
+    const [otpCode, setOtpCode] = useState(['', '', '', '']);
+    const inputRefs = useRef([]);
+    const [email, setEmail] = useState('');
 
     useEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener(
@@ -24,23 +28,46 @@ const OTP = ({ navigation }) => {
         return () => {
             keyboardDidShowListener.remove();
             keyboardDidHideListener.remove();
-        }
+        };
+    }, []);
+
+    useEffect(() => {
+        const fetchData = async() => {
+            const user = await AsyncStorage.getItem('userData');
+            if (user) {
+                const parsedUser = JSON.parse(user);
+                setEmail(parsedUser.user.email);
+            }
+        }   
+
+        fetchData()
     }, [])
 
-    const handleNext = () => {
-        navigation.replace('Login')
-    }
+    const handleNext = async() => {
+        try {
+            const otp = otpCode.join('');
+            await api.verifyOtp({ email, otp });
+            Toast.show('OTP verified successfully!', Toast.LONG);
+            navigation.replace('Images');
+        } catch (error) {
+            Toast.show('OTP verification failed. Please try again.', Toast.LONG);
+        }
+    };
 
     const handleOtpChange = (index, value) => {
-        const newOtp = [...otp];
-        newOtp[index] = value;
-        setOtp(newOtp);
-    }
+        const newOtpCode = [...otpCode];
+        newOtpCode[index] = value;
+        setOtpCode(newOtpCode);
+
+        if (value && index < otpCode.length - 1) {
+            inputRefs.current[index + 1].focus();
+        }
+    };
 
     return (
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps='handled' behavior="padding" >
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps='handled'>
             <View style={styles.container}>
-                <TouchableOpacity style={styles.backButton} onPress={() => navigation.replace('Images')}>
+                <TouchableOpacity style={styles.backButton} onPress={() => navigation.replace('SignUp')}>
                     <Image source={ImagesPath.arrowBack} style={styles.backIcon} />
                 </TouchableOpacity>
                 <View style={styles.header}>
@@ -49,7 +76,7 @@ const OTP = ({ navigation }) => {
                 </View>
                 <View style={[styles.inputContainer, { marginTop: keyboardOpen ? '10%' : "10%" }]}>
                     <View style={styles.otpContainer}>
-                        {otp.map((digit, index) => (
+                        {otpCode.map((digit, index) => (
                             <TextInput
                                 key={index}
                                 style={styles.otpInput}
@@ -57,10 +84,10 @@ const OTP = ({ navigation }) => {
                                 maxLength={1}
                                 onChangeText={(value) => handleOtpChange(index, value)}
                                 value={digit}
+                                ref={el => inputRefs.current[index] = el}
                             />
                         ))}
                     </View>
-                    {/* <Button title="Next" onPress={handleNext} /> */}
                     <TouchableOpacity style={styles.loginButton} onPress={handleNext}>
                         <Text style={styles.loginButtonText}>Next</Text>
                     </TouchableOpacity>
@@ -101,35 +128,6 @@ const styles = StyleSheet.create({
     },
     header: {
         alignItems: 'center'
-    },
-    image: {
-        position: 'absolute',
-        resizeMode: 'cover',
-    },
-    text: {
-        fontSize: 50,
-        color: 'white',
-        marginBottom: 30,
-    },
-    overlay: {
-        ...StyleSheet.absoluteFillObject,
-        alignItems: 'center',
-    },
-    overlaySub: {
-        marginTop: 100
-    },
-    label: {
-        marginBottom: 8,
-        fontSize: 16,
-        color: 'black'
-    },
-    input: {
-        height: 40,
-        borderColor: 'gray',
-        borderWidth: 1,
-        marginBottom: 12,
-        paddingLeft: 8,
-        color: 'black'
     },
     otpContainer: {
         flexDirection: 'row',
@@ -179,4 +177,3 @@ const styles = StyleSheet.create({
 });
 
 export default OTP;
-

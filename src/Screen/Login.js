@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, TextInput, Button, Text, Image, ScrollView, Keyboard, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-simple-toast';
 import { ImagesPath } from '../Constant/ImagesPath/ImagesPath';
+import api from '../server/api';
 
 const Login = ({ navigation }) => {
     const [email, setEmail] = useState('');
@@ -9,9 +10,17 @@ const Login = ({ navigation }) => {
     const [keyboardOpen, setKeyboardOpen] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
-    const handleLogin = () => {
+    const handleLogin = async() => {
         if (validateInputs()) {
-            navigation.replace('SignUp')
+            try {
+                await api.login({email, password});
+                Toast.show('Login successful!', Toast.LONG);
+                setEmail('');
+                setPassword('');
+                // navigation.replace('SignUp')
+            } catch (error) {
+                showToast('Login failed. Please check your credentials.');
+            }
         }
     };
 
@@ -38,7 +47,7 @@ const Login = ({ navigation }) => {
 
     const validateInputs = () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[a-z])(?=.*\d).{8,}$/;
 
         if (!email && !password) {
             showToast('Please fill in all fields');
@@ -222,7 +231,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: 'black',
         marginTop: 10,
-        fontFamily: 'San Francisco', 
+        fontFamily: 'San Francisco',
     },
     passwordToggle: {
         position: 'absolute',
