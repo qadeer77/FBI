@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { getData, storeData } from '../components/Storage';
-const BASE_URL = "http://localhost:5000"
-// const BASE_URL="https://fbi-backhand.vercel.app"
+// const BASE_URL = "http://localhost:5000"
+const BASE_URL="https://fbi-backhand.vercel.app"
 
 const apiService = axios.create({
     baseURL: BASE_URL,
