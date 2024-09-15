@@ -1,25 +1,86 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TextInput, Button, Text, Image, ScrollView, Keyboard, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TextInput, Button, Text, Image, ScrollView, Keyboard, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-simple-toast';
 import { ImagesPath } from '../Constant/ImagesPath/ImagesPath';
 import api from '../server/api';
+import auth from '@react-native-firebase/auth';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { AppFonts } from '../Constant/Fonts/Font';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Login = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [keyboardOpen, setKeyboardOpen] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    const handleLogin = async() => {
+    // const handleLogin = async () => {
+    //     if (validateInputs()) {
+    //         try {
+    //             await api.login({ email, password });
+    //             Toast.show('Login successful!', Toast.LONG);
+    //             setEmail('');
+    //             setPassword('');
+    //         } catch (error) {
+    //             showToast('Login failed. Please check your credentials.');
+    //         }
+    //     }
+    // };
+
+    GoogleSignin.configure({
+        webClientId: '824330957680-c0hag4cl1dm1g3gq9lnkq6022okk2qdt.apps.googleusercontent.com',
+        offlineAccess: true,
+    });
+
+    const handleGoogle = async () => {
+        try {
+
+
+        } catch (error) {
+            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+                console.log('User cancelled the login');
+                showToast('Sign-In cancelled');
+            } else if (error.code === statusCodes.IN_PROGRESS) {
+                console.log('Sign-in is in progress already');
+                showToast('Sign-In is in progress');
+            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+                console.log('Play services are not available');
+                showToast('Play services are not available');
+            } else {
+                console.error('Google sign-in error:', error);
+                showToast('Google Sign-In failed. Please try again.');
+            }
+        }
+    };
+
+    const handleLogin = async () => {
         if (validateInputs()) {
+            setLoading(true);
             try {
-                await api.login({email, password});
+                await auth().signInWithEmailAndPassword(email, password);
                 Toast.show('Login successful!', Toast.LONG);
+                await AsyncStorage.setItem('isLoggedIn', 'true');
                 setEmail('');
                 setPassword('');
-                // navigation.replace('SignUp')
+                navigation.replace('Home')
             } catch (error) {
-                showToast('Login failed. Please check your credentials.');
+                if (error.code === 'auth/invalid-credential') {
+                    console.log('The email address you entered does not exist in our records.');
+                    showToast('The email address you entered does not exist in our records.');
+                } else if (error.code === 'auth/invalid-email') {
+                    console.log('That email address is invalid!');
+                } else if (error.code === 'auth/user-not-found') {
+                    showToast('The email address you entered does not exist in our records.');
+                    console.log('That email address is invalid!');
+                } else if (error.code === 'auth/wrong-password') {
+                    showToast('Your Password Is Wrong.');
+                    console.log('That email address is invalid!');
+                } else {
+                    console.error("errror=====>>>>> ", error);
+                }
+            } finally {
+                setLoading(false);
             }
         }
     };
@@ -123,7 +184,11 @@ const Login = ({ navigation }) => {
                         <Text style={styles.forgotPasswordLink}>Forgot Password?</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                        <Text style={styles.loginButtonText}>Login</Text>
+                        {loading ? (
+                            <ActivityIndicator size="small" color="white" />
+                        ) : (
+                            <Text style={styles.loginButtonText}>Login</Text>
+                        )}
                     </TouchableOpacity>
                     <View style={styles.registerTextContainer}>
                         <Text style={styles.registerText}>Don't have an account?</Text>
@@ -132,6 +197,12 @@ const Login = ({ navigation }) => {
                         </TouchableOpacity>
                     </View>
                 </View>
+                {/* <Text style={{ color: 'black', textAlign: 'center', marginTop: 10 }}>Or Signin with</Text> */}
+                {/* <View style={styles.googleContainer}>
+                    <TouchableOpacity style={[styles.fgaSubContainer, { marginRight: 15 }]} onPress={handleGoogle}>
+                        <Image source={ImagesPath.GoogleImages} style={styles.loginImages} />
+                    </TouchableOpacity>
+                </View> */}
             </View>
         </ScrollView>
     );
@@ -186,6 +257,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         paddingLeft: 35,
         color: 'black',
+        fontFamily: AppFonts.regular
     },
     inputContainer: {
         paddingHorizontal: 0,
@@ -195,10 +267,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         marginTop: 10,
+        fontFamily: AppFonts.regular
     },
     registerText: {
         color: 'black',
         fontSize: 16,
+        fontFamily: AppFonts.regular
     },
     registerLink: {
         color: '#114e95',
@@ -208,6 +282,7 @@ const styles = StyleSheet.create({
         color: '#F1565D',
         textAlign: 'right',
         marginBottom: 12,
+        fontFamily: AppFonts.regular
     },
     loginButton: {
         backgroundColor: '#114e95',
@@ -219,25 +294,51 @@ const styles = StyleSheet.create({
     loginButtonText: {
         color: 'white',
         fontSize: 18,
+        fontFamily: AppFonts.regular
     },
     title: {
         fontSize: 32,
-        fontWeight: 'bold',
+        // fontWeight: 'bold',
         marginTop: 20,
         color: '#114e95',
-        // fontFamily: 'San Francisco', 
+        fontFamily: AppFonts.bold,
     },
     subtitle: {
         fontSize: 18,
         color: 'black',
         marginTop: 10,
-        fontFamily: 'San Francisco',
+        fontFamily: AppFonts.regular,
     },
     passwordToggle: {
         position: 'absolute',
         top: 10,
         right: 20,
     },
+    googleContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 30,
+        marginBottom: 20
+    },
+    fgaSubContainer: {
+        backgroundColor: 'white',
+        height: 80,
+        width: 100,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 20
+    },
+    loginImages: {
+        width: 30,
+        height: 30,
+        resizeMode: 'contain'
+    },
+    accountContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center'
+    }
 });
 
 export default Login;

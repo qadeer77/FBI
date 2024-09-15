@@ -8,6 +8,8 @@ import Images from './src/Screen/Images';
 import SplashScreen from './src/Screen/SplashScreen';
 import ForgotPassword from './src/Screen/ForgotPassword';
 import OTP from './src/Screen/OTP';
+import Home from './src/Screen/Home';
+import ProfileScreen from './src/Screen/ProfileScreen';
 
 
 LogBox.ignoreLogs(['Warning: ...']);
@@ -27,6 +29,8 @@ function App() {
           <Tab.Screen name="Images" component={Images}/>
           <Tab.Screen name="ForgotPassword" component={ForgotPassword}/>
           <Tab.Screen name="OTP" component={OTP}/>
+          <Tab.Screen name="Home" component={Home}/>
+          <Tab.Screen name="ProfileScreen" component={ProfileScreen}/>
         </Tab.Navigator>
       </NavigationContainer>
     </>

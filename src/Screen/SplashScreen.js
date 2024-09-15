@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
 import { View, Image, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { ImagesPath } from '../Constant/ImagesPath/ImagesPath';
+import { AppFonts } from '../Constant/Fonts/Font';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SplashScreen = ({ navigation }) => {
     const [step, setStep] = useState(0);
 
-    const handleNext = () => {
+    const handleNext = async () => {
         if (step < 2) {
             setStep(step + 1);
         } else {
-            navigation.replace('Login');
+            const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
+            if (isLoggedIn === 'true') {
+                navigation.replace('Home');
+            } else {
+                navigation.replace('Login');
+            }
         }
     };
 
@@ -57,8 +64,10 @@ const SplashScreen = ({ navigation }) => {
             {step === 0 && <Image source={ImagesPath.SplashScreen} style={styles.image} />}
             {step === 1 && <Image source={ImagesPath.supermarket2} style={styles.image} />}
             {step === 2 && <Image source={ImagesPath.manSuperMarket} style={styles.image} />}
-            <Text style={styles.heading}>{heading}</Text>
-            <Text style={styles.paragraph}>{paragraph}</Text>
+            <View style={{position: 'relative', top: '20%'}}>
+                <Text style={styles.heading}>{heading}</Text>
+                <Text style={styles.paragraph}>{paragraph}</Text>
+            </View>
             <View style={styles.circlesContainer}>
                 {renderCircles()}
             </View>
@@ -83,21 +92,16 @@ const styles = StyleSheet.create({
         position: 'absolute',
     },
     heading: {
-        position: 'absolute',
-        bottom: 260,
-        paddingHorizontal: 20,
         textAlign: 'center',
         fontSize: 25,
-        fontWeight: 'bold',
         color: '#114e95',
+        fontFamily: AppFonts.bold
     },
     paragraph: {
-        position: 'absolute',
-        bottom: 220,
-        paddingHorizontal: 20,
         textAlign: 'center',
         fontSize: 16,
         color: 'black',
+        fontFamily: AppFonts.regular
     },
     circlesContainer: {
         position: 'absolute',
@@ -122,6 +126,7 @@ const styles = StyleSheet.create({
     buttonText: {
         color: 'white',
         fontSize: 16,
+        fontFamily: AppFonts.regular
     },
 });
 

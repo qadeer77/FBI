@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { getData, storeData } from '../components/Storage';
-// const BASE_URL = "http://localhost:5000"
-const BASE_URL="https://fbi-backhand.vercel.app"
+const BASE_URL = "https://backhand-fbi.vercel.app"
+// const BASE_URL="https://fbi-backhand.vercel.app"
 
 const apiService = axios.create({
     baseURL: BASE_URL,
@@ -35,7 +35,17 @@ const api = {
     },
     verifyOtp: async (userData) => {
         try {
-            const response = await apiService.post('/api/verify-otp', userData);
+            const response = await apiService.post('/verify-otp', userData);
+            return response.data
+        } catch (error) {
+            console.error('Error during verifyOtp:', error);
+            throw error;
+        }
+    },
+    sendOtp: async (userData) => {
+        try {
+            const response = await apiService.post('/send-otp', userData);
+            await storeData('userToken', response.data);
             return response.data
         } catch (error) {
             console.error('Error during verifyOtp:', error);

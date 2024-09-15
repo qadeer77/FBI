@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, Button, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-simple-toast';
 import { launchCamera } from 'react-native-image-picker';
-import api from '../server/api';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
 import { useNavigation } from '@react-navigation/native';
+import { AppFonts } from '../Constant/Fonts/Font';
 
 const Images = () => {
-    const [images, setImages] = useState([]);
-
-    const navigation = useNavigation()
+    const [image, setImage] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const navigation = useNavigation();
 
     const handleCameraLaunch = () => {
-        if (images.length >= 5) {
-            Toast.show('You can only select up to 5 images.');
+        if (image) {
+            Toast.show('You can only select one image.');
             return;
         }
 
@@ -29,7 +32,7 @@ const Images = () => {
             } else if (response.assets && response.assets.length > 0) {
                 const uri = response.assets[0].uri;
                 if (validateImage(response.assets[0])) {
-                    setImages([...images, uri]);
+                    setImage(uri);
                 } else {
                     Toast.show('Invalid image. Please take a proper photo.');
                 }
@@ -43,36 +46,59 @@ const Images = () => {
     };
 
     const handleNext = async () => {
+        setLoading(true);
+
         try {
-            await api.uploadImage(images)
-            Toast.show('Image Succfully Uploaded!', Toast.LONG);
-            navigation.navigate('Login');
+            if (image) {
+                const user = auth().currentUser;
+                if (user) {
+                    const response = await fetch(image);
+                    const blob = await response.blob();
+                    const ref = storage().ref(`images/${user.uid}/${Date.now()}`);
+                    await ref.put(blob);
+
+                    const imageUrl = await ref.getDownloadURL();
+                    await firestore().collection('users').doc(user.uid).update({
+                        imageUrl: imageUrl,
+                    });
+
+                    Toast.show('Image Successfully Uploaded!', Toast.LONG);
+                    navigation.navigate('Login');
+                } else {
+                    Toast.show('No user is currently signed in.', Toast.LONG);
+                }
+            } else {
+                Toast.show('No image selected.', Toast.LONG);
+            }
         } catch (error) {
-            Toast.show('Image Uploaded failed. Please try again.', Toast.LONG);
+            Toast.show('Image Upload failed. Please try again.', Toast.LONG);
+        } finally {
+            setLoading(false);
         }
-    }
+    };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Select up to 5 images</Text>
+            <Text style={styles.title}>Select an image</Text>
             <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.loginButton} onPress={handleCameraLaunch} disabled={images.length >= 5}>
+                <TouchableOpacity style={styles.loginButton} onPress={handleCameraLaunch} disabled={!!image}>
                     <Text style={styles.loginButtonText}>Take Photo</Text>
                 </TouchableOpacity>
             </View>
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
-                {images.map((imageUri, index) => (
-                    <Image key={index} source={{ uri: imageUri }} style={styles.image} />
-                ))}
-            </ScrollView>
-            <Text style={styles.imageCount}>Images Selected: {images.length}/5</Text>
-            {images.length === 5 && (
-                <View style={styles.nextButtonContainer}>
-                    <TouchableOpacity style={styles.loginButton} onPress={handleNext}>
+            {image && (
+                <Image source={{ uri: image }} style={styles.image} />
+            )}
+            <Text style={styles.imageCount}>Image Selected: {image ? 1 : 0}/1</Text>
+            {image && (
+            <View style={styles.nextButtonContainer}>
+                <TouchableOpacity style={styles.loginButton} onPress={handleNext}>
+                    {loading ? (
+                        <ActivityIndicator size="small" color="white" />
+                    ) : (
                         <Text style={styles.loginButtonText}>Next</Text>
-                    </TouchableOpacity>
-                </View>
-
+                    )}
+                </TouchableOpacity>
+            </View>
             )}
         </View>
     );
@@ -87,12 +113,11 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 20,
         marginBottom: 20,
+        color: "black",
+        fontFamily: AppFonts.regular
     },
     buttonContainer: {
         marginBottom: 20,
-    },
-    scrollContainer: {
-        flexGrow: 1,
     },
     image: {
         width: '100%',
@@ -102,6 +127,7 @@ const styles = StyleSheet.create({
     imageCount: {
         textAlign: 'center',
         marginTop: 10,
+        fontFamily: AppFonts.regular
     },
     nextButtonContainer: {
         marginTop: 20,
@@ -116,6 +142,10 @@ const styles = StyleSheet.create({
     loginButtonText: {
         color: 'white',
         fontSize: 18,
+        fontFamily: AppFonts.regular
+    },
+    loader: {
+        marginTop: 20,
     },
 });
 

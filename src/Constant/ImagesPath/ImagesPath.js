@@ -14,4 +14,11 @@ export const ImagesPath = {
     supermarket2: require(`../../Assets/supermarket2.png`),
     manSuperMarket: require(`../../Assets/manSuperMarket.png`),
     logo: require(`../../Assets/logo.jpg`),
+    hemberger2: require(`../../Assets/hemberger2.png`),
+    cardImage: require(`../../Assets/cardImage.png`),
+    cardImage1: require(`../../Assets/cardImage1.png`),
+    cardImage2: require(`../../Assets/cardImage2.jpg`),
+    cardImage3: require(`../../Assets/cardImage3.png`),
+    backIcON: require(`../../Assets/backIcON.png`),
+    logoutIcon: require(`../../Assets/logoutIcon.webp`),
 }

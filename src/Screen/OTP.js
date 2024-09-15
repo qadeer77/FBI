@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, TextInput, Button, Text, Image, ScrollView, Keyboard, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TextInput, Text, Image, ScrollView, Keyboard, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-simple-toast';
 import { ImagesPath } from '../Constant/ImagesPath/ImagesPath';
 import api from '../server/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppFonts } from '../Constant/Fonts/Font';
 
 const OTP = ({ navigation }) => {
     const [keyboardOpen, setKeyboardOpen] = useState(false);
     const [otpCode, setOtpCode] = useState(['', '', '', '']);
     const inputRefs = useRef([]);
-    const [email, setEmail] = useState('');
+    const [token, setToken] = useState('');
+    const [loading, setLoading] = useState(false); 
 
     useEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener(
@@ -32,25 +34,30 @@ const OTP = ({ navigation }) => {
     }, []);
 
     useEffect(() => {
-        const fetchData = async() => {
-            const user = await AsyncStorage.getItem('userData');
+        const fetchData = async () => {
+            const user = await AsyncStorage.getItem('userToken');
             if (user) {
                 const parsedUser = JSON.parse(user);
-                setEmail(parsedUser.user.email);
+                console.log("parsedUser===>>>>>>>> ", parsedUser.token);
+                setToken(parsedUser.token);
             }
-        }   
+        };
 
-        fetchData()
-    }, [])
+        fetchData();
+    }, []);
 
-    const handleNext = async() => {
+    const handleNext = async () => {
+        setLoading(true);
+
         try {
-            const otp = otpCode.join('');
-            await api.verifyOtp({ email, otp });
+            const enteredOtp = otpCode.join('');
+            await api.verifyOtp({ token, enteredOtp });
             Toast.show('OTP verified successfully!', Toast.LONG);
             navigation.replace('Images');
         } catch (error) {
             Toast.show('OTP verification failed. Please try again.', Toast.LONG);
+        } finally {
+            setLoading(false); 
         }
     };
 
@@ -89,7 +96,11 @@ const OTP = ({ navigation }) => {
                         ))}
                     </View>
                     <TouchableOpacity style={styles.loginButton} onPress={handleNext}>
-                        <Text style={styles.loginButtonText}>Next</Text>
+                        {loading ? (
+                            <ActivityIndicator size="small" color="white" />
+                        ) : (
+                            <Text style={styles.loginButtonText}>Next</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
             </View>
@@ -151,17 +162,20 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
         elevation: 5,
+        fontFamily: AppFonts.regular
     },
     title1: {
         fontSize: 32,
-        fontWeight: 'bold',
+        // fontWeight: 'bold',
         marginTop: 20,
-        color: '#114e95'
+        color: '#114e95',
+        fontFamily: AppFonts.bold
     },
     subtitle: {
         fontSize: 18,
         color: 'black',
         marginTop: 10,
+        fontFamily: AppFonts.regular
     },
     loginButton: {
         backgroundColor: '#114e95',
@@ -173,6 +187,10 @@ const styles = StyleSheet.create({
     loginButtonText: {
         color: 'white',
         fontSize: 18,
+        fontFamily: AppFonts.regular
+    },
+    loader: {
+        marginTop: 20,
     },
 });
 

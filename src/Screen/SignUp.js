@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TextInput, Button, Text, ScrollView, TouchableOpacity, Platform, Image, Keyboard } from 'react-native';
+import { StyleSheet, View, TextInput, Button, Text, ScrollView, TouchableOpacity, Platform, Image, Keyboard, ActivityIndicator } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Toast from 'react-native-simple-toast';
 import { ImagesPath } from '../Constant/ImagesPath/ImagesPath';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import moment from 'moment';
 import api from '../server/api';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+import axios from 'axios';
+import { AppFonts } from '../Constant/Fonts/Font';
 
 const SignUp = ({ navigation }) => {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [dob, setDob] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [creditCardNumber, setCreditCardNumber] = useState('');
@@ -20,21 +24,70 @@ const SignUp = ({ navigation }) => {
     const [creditCardExpiryPickerVisible, setCreditCardExpiryPickerVisible] = useState(false);
     const [creditCardCVC, setCreditCardCVC] = useState('');
     const [keyboardOpen, setKeyboardOpen] = useState(false);
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    GoogleSignin.configure({
-        webClientId: '824330957680-c0hag4cl1dm1g3gq9lnkq6022okk2qdt.apps.googleusercontent.com',
-        offlineAccess: true,
-    });
+    // const handleSignUp = async () => {
+    //     if (validateInputs()) {
+    //         try {
+    //             await api.signup({ firstName, lastName, email, password, dob, creditCardNumber, creditCardExpiry, creditCardCVC })
+    //             Toast.show('Signup successful!', Toast.LONG);
+    //             // navigation.replace('Images')
+    //             navigation.replace('OTP')
+    //         } catch (error) {
+    //             Toast.show('Signup failed. Please try again.', Toast.LONG);
+    //         }
+    //     }
+    // };
 
     const handleSignUp = async () => {
         if (validateInputs()) {
+            setLoading(true);
             try {
-                await api.signup({ firstName, lastName, email, password, dob, creditCardNumber, creditCardExpiry, creditCardCVC })
-                Toast.show('Signup successful!', Toast.LONG);
-                // navigation.replace('Images')
-                navigation.replace('OTP')
+                const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                await firestore().collection('users').doc(user.uid).set({
+                    firstname: firstName,
+                    lastname: lastName,
+                    email: email,
+                    DOB: dob,
+                    creditCardNumber: creditCardNumber,
+                    creditCardExpiry: creditCardExpiry,
+                    creditCardCVC: creditCardCVC,
+                    createdAt: firestore.FieldValue.serverTimestamp(),
+                });
+
+                console.log('User signed up and data stored successfully in Firestore');
+
+                await api.sendOtp({ email });
+
+                setFirstName('');
+                setLastName('');
+                setEmail('');
+                setPassword('');
+                setDob(new Date());
+                setCreditCardNumber('');
+                setCreditCardExpiry('');
+                setCreditCardCVC('');
+                setConfirmPassword('')
+
+                showToast('Your account has been created and OTP has been sent to your email.');
+
+
+                navigation.navigate('OTP');
             } catch (error) {
-                Toast.show('Signup failed. Please try again.', Toast.LONG);
+                if (error.code === 'auth/email-already-in-use') {
+                    console.log('That email address is already in use!');
+                    showToast('That email address is already in use!')
+                } else if (error.code === 'auth/invalid-email') {
+                    console.log('That email address is invalid!');
+                } else {
+                    console.error(error);
+                }
+            } finally {
+                setLoading(false);
             }
         }
     };
@@ -98,6 +151,10 @@ const SignUp = ({ navigation }) => {
             showToast('Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, and one digit');
             return false;
         }
+        if (password !== confirmPassword) {
+            showToast('Passwords do not match');
+            return false;
+        }
         if (!dob) {
             showToast('Please select your date of birth');
             return false;
@@ -135,163 +192,178 @@ const SignUp = ({ navigation }) => {
         setCreditCardExpiryPickerVisible(false);
     };
 
-    const handleGoogle = async () => {
-        try {
-            await GoogleSignin.hasPlayServices();
-            const userInfo = await GoogleSignin.signIn();
-            const idToken = userInfo.idToken;
-            const userData = await api.signGoogle(idToken);
-            console.log('Google Sign-In successful:', userData);
-            showToast('Google Sign-In successful!');
-            navigation.replace('Login'); 
 
-        } catch (error) {
-            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-                console.log('User cancelled the login');
-                showToast('Sign-In cancelled');
-            } else if (error.code === statusCodes.IN_PROGRESS) {
-                console.log('Sign-in is in progress already');
-                showToast('Sign-In is in progress');
-            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-                console.log('Play services are not available');
-                showToast('Play services are not available');
-            } else {
-                console.error('Google sign-in error:', error);
-                showToast('Google Sign-In failed. Please try again.');
-            }
-        }
+    const togglePasswordVisibility = () => {
+        setIsPasswordVisible(!isPasswordVisible);
     };
 
-    return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.replace('Login')}>
-                <Image source={ImagesPath.arrowBack} style={styles.backIcon} />
-            </TouchableOpacity>
-            <View style={styles.header}>
-                <Text style={styles.title1}>Register</Text>
-                <Text style={styles.subtitle}>Create Your New Account</Text>
-            </View>
-            <View style={[styles.inputContainer, { marginTop: keyboardOpen ? '10%' : "10%" }]}>
-                <View style={styles.inputWrapper}>
-                    <View style={styles.inputIcon}>
-                        <Image source={ImagesPath.firstName} style={styles.icon} />
-                    </View>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="First Name"
-                        placeholderTextColor="black"
-                        value={firstName}
-                        onChangeText={setFirstName}
-                    />
-                </View>
-                <View style={styles.inputWrapper}>
-                    <View style={styles.inputIcon}>
-                        <Image source={ImagesPath.firstName} style={styles.icon} />
-                    </View>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Last Name"
-                        placeholderTextColor="black"
-                        value={lastName}
-                        onChangeText={setLastName}
-                    />
-                </View>
-                <View style={styles.inputWrapper}>
-                    <View style={styles.inputIcon}>
-                        <Image source={ImagesPath.emailImages} style={styles.icon} />
-                    </View>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Email"
-                        placeholderTextColor="black"
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                    />
-                </View>
-                <View style={styles.inputWrapper}>
-                    <View style={styles.inputIcon}>
-                        <Image source={ImagesPath.passwordImages} style={styles.icon} />
-                    </View>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Password"
-                        placeholderTextColor="black"
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry
-                    />
-                </View>
+    const toggleConfirmPasswordVisibility = () => {
+        setIsConfirmPasswordVisible(!isConfirmPasswordVisible);
+    };
 
-                <View style={styles.inputWrapper}>
-                    <TouchableOpacity onPress={showDatePickerModal} style={styles.dateInput}>
-                        <Text style={styles.dateText}>
-                            {dob ? dob.toLocaleDateString() : 'Date of Birth'}
-                        </Text>
-                    </TouchableOpacity>
-                    {showDatePicker && (
-                        <DateTimePicker
-                            value={dob}
-                            mode="date"
-                            display="default"
-                            onChange={onChangeDate}
-                        />
-                    )}
-                </View>
-                <View style={styles.inputWrapper}>
-                    <View style={styles.inputIcon}>
-                        <Image source={ImagesPath.creditCardNumber} style={styles.icon} />
-                    </View>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Credit Card Number"
-                        placeholderTextColor="black"
-                        value={creditCardNumber}
-                        onChangeText={setCreditCardNumber}
-                        keyboardType="numeric"
-                    />
-                </View>
-                <View style={styles.inputWrapper}>
-                    <TouchableOpacity onPress={() => setCreditCardExpiryPickerVisible(true)} style={styles.dateInput}>
-                        <Text style={styles.dateText}>
-                            {creditCardExpiry ? creditCardExpiry : 'Credit Card Expiry (MM/YY)'}
-                        </Text>
-                    </TouchableOpacity>
-                    <DateTimePickerModal
-                        isVisible={creditCardExpiryPickerVisible}
-                        mode="date"
-                        onConfirm={handleCreditCardExpiryConfirm}
-                        onCancel={() => setCreditCardExpiryPickerVisible(false)}
-                        display="spinner"
-                        date={dob}
-                        minimumDate={new Date()}
-                    />
-                </View>
-                <View style={styles.inputWrapper}>
-                    <View style={styles.inputIcon}>
-                        <Image source={ImagesPath.creditCardNumber} style={styles.icon} />
-                    </View>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Credit Card CVC"
-                        placeholderTextColor="black"
-                        value={creditCardCVC}
-                        onChangeText={setCreditCardCVC}
-                        keyboardType="numeric"
-                    />
-                </View>
-                <TouchableOpacity style={styles.loginButton} onPress={handleSignUp}>
-                    <Text style={styles.loginButtonText}>Next</Text>
+    const Loader = () => (
+        <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="#114e95" />
+        </View>
+    );
+
+
+    return (
+        <>
+            <ScrollView contentContainerStyle={styles.container}>
+                <TouchableOpacity style={styles.backButton} onPress={() => navigation.replace('Login')}>
+                    <Image source={ImagesPath.arrowBack} style={styles.backIcon} />
                 </TouchableOpacity>
-                <Text style={{ color: 'black', textAlign: 'center', marginTop: 10 }}>Or Sign Up in with</Text>
-                <View style={styles.googleContainer}>
-                    <TouchableOpacity style={[styles.fgaSubContainer, { marginRight: 15 }]} onPress={handleGoogle}>
-                        <Image source={ImagesPath.GoogleImages} style={styles.loginImages} />
-                    </TouchableOpacity>
-                    
+                <View style={styles.header}>
+                    <Text style={styles.title1}>Register</Text>
+                    <Text style={styles.subtitle}>Create Your New Account</Text>
                 </View>
-            </View>
-        </ScrollView>
+                <View style={[styles.inputContainer, { marginTop: keyboardOpen ? '10%' : "10%" }]}>
+                    <View style={styles.inputWrapper}>
+                        <View style={styles.inputIcon}>
+                            <Image source={ImagesPath.firstName} style={styles.icon} />
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="First Name"
+                            placeholderTextColor="black"
+                            value={firstName}
+                            onChangeText={setFirstName}
+                        />
+                    </View>
+                    <View style={styles.inputWrapper}>
+                        <View style={styles.inputIcon}>
+                            <Image source={ImagesPath.firstName} style={styles.icon} />
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Last Name"
+                            placeholderTextColor="black"
+                            value={lastName}
+                            onChangeText={setLastName}
+                        />
+                    </View>
+                    <View style={styles.inputWrapper}>
+                        <View style={styles.inputIcon}>
+                            <Image source={ImagesPath.emailImages} style={styles.icon} />
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Email"
+                            placeholderTextColor="black"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                        />
+                    </View>
+                    <View style={styles.inputWrapper}>
+                        <View style={styles.inputIcon}>
+                            <Image source={ImagesPath.passwordImages} style={styles.icon} />
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Password"
+                            placeholderTextColor="black"
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            secureTextEntry={!isPasswordVisible}
+                        />
+                        <TouchableOpacity onPress={togglePasswordVisibility} style={{ position: 'absolute', right: 10, top: 5 }}>
+                            <Image
+                                source={isPasswordVisible ? ImagesPath.eyeSlashImage : ImagesPath.eyeImage}
+                                style={{ width: 25, height: 25, resizeMode: 'contain' }}
+                            />
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.inputWrapper}>
+                        <View style={styles.inputIcon}>
+                            <Image source={ImagesPath.passwordImages} style={styles.icon} />
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Confirm Password"
+                            placeholderTextColor="black"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry={!isConfirmPasswordVisible}
+                        />
+                        <TouchableOpacity onPress={toggleConfirmPasswordVisibility} style={{ position: 'absolute', right: 10, top: 5 }}>
+                            <Image
+                                source={isConfirmPasswordVisible ? ImagesPath.eyeSlashImage : ImagesPath.eyeImage}
+                                style={{ width: 25, height: 25, resizeMode: 'contain' }}
+                            />
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.inputWrapper}>
+                        <TouchableOpacity onPress={showDatePickerModal} style={styles.dateInput}>
+                            <Text style={styles.dateText}>
+                                {dob ? dob.toLocaleDateString() : 'Date of Birth'}
+                            </Text>
+                        </TouchableOpacity>
+                        {showDatePicker && (
+                            <DateTimePicker
+                                value={dob}
+                                mode="date"
+                                display="default"
+                                onChange={onChangeDate}
+                            />
+                        )}
+                    </View>
+                    <View style={styles.inputWrapper}>
+                        <View style={styles.inputIcon}>
+                            <Image source={ImagesPath.creditCardNumber} style={styles.icon} />
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Credit Card Number"
+                            placeholderTextColor="black"
+                            value={creditCardNumber}
+                            onChangeText={setCreditCardNumber}
+                            keyboardType="numeric"
+                        />
+                    </View>
+                    <View style={styles.inputWrapper}>
+                        <TouchableOpacity onPress={() => setCreditCardExpiryPickerVisible(true)} style={styles.dateInput}>
+                            <Text style={styles.dateText}>
+                                {creditCardExpiry ? creditCardExpiry : 'Credit Card Expiry (MM/YY)'}
+                            </Text>
+                        </TouchableOpacity>
+                        <DateTimePickerModal
+                            isVisible={creditCardExpiryPickerVisible}
+                            mode="date"
+                            onConfirm={handleCreditCardExpiryConfirm}
+                            onCancel={() => setCreditCardExpiryPickerVisible(false)}
+                            display="spinner"
+                            date={dob}
+                            minimumDate={new Date()}
+                        />
+                    </View>
+                    <View style={styles.inputWrapper}>
+                        <View style={styles.inputIcon}>
+                            <Image source={ImagesPath.creditCardNumber} style={styles.icon} />
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Credit Card CVC"
+                            placeholderTextColor="black"
+                            value={creditCardCVC}
+                            onChangeText={setCreditCardCVC}
+                            keyboardType="numeric"
+                        />
+                    </View>
+
+                    <TouchableOpacity style={styles.loginButton} onPress={handleSignUp}>
+                        {loading ? (
+                            <ActivityIndicator size="small" color="white" />
+                        ) : (
+                            <Text style={styles.loginButtonText}>Next</Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        </>
     );
 };
 
@@ -371,6 +443,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         paddingLeft: 35,
         color: 'black',
+        fontFamily: AppFonts.regular
     },
     dateInput: {
         height: 40,
@@ -389,14 +462,16 @@ const styles = StyleSheet.create({
     },
     title1: {
         fontSize: 32,
-        fontWeight: 'bold',
+        // fontWeight: 'bold',
         marginTop: 20,
-        color: '#114e95'
+        color: '#114e95',
+        fontFamily: AppFonts.bold
     },
     subtitle: {
         fontSize: 18,
         color: 'black',
         marginTop: 10,
+        fontFamily: AppFonts.regular
     },
     loginButton: {
         backgroundColor: '#114e95',
@@ -408,6 +483,7 @@ const styles = StyleSheet.create({
     loginButtonText: {
         color: 'white',
         fontSize: 18,
+        fontFamily: AppFonts.regular
     },
     googleContainer: {
         flexDirection: 'row',
@@ -433,7 +509,20 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center'
-    }
+    },
+    loaderContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    loader: {
+        marginTop: 20,
+    },
 });
 
 export default SignUp;

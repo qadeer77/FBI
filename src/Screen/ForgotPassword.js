@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TextInput, Text, Image, ScrollView, Keyboard, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TextInput, Text, Image, ScrollView, Keyboard, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-simple-toast';
 import { ImagesPath } from '../Constant/ImagesPath/ImagesPath';
-import api from '../server/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import auth from '@react-native-firebase/auth';
+import { AppFonts } from '../Constant/Fonts/Font';
 
 const ForgotPassword = ({ navigation }) => {
     const [keyboardOpen, setKeyboardOpen] = useState(false);
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [showNewPassword, setShowNewPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [email, setEmail] = useState('');
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener(
@@ -33,29 +30,23 @@ const ForgotPassword = ({ navigation }) => {
         }
     }, []);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const user = await AsyncStorage.getItem('userData');
-            if (user) {
-                const parsedUser = JSON.parse(user);
-                setEmail(parsedUser.user.email);
-            }
-        }
-
-        fetchData()
-    }, [])
-
-    const handleNext = async () => {
-        if (newPassword !== confirmPassword) {
-            Toast.show('Passwords do not match');
+    const handleResetPassword = async () => {
+        if (!email) {
+            Toast.show('Please enter your email address');
             return;
         }
+
+        setLoading(true)
+
         try {
-            await api.resetPassword({ email, newPassword, confirmPassword });
-            Toast.show('Password reset successful');
+            await auth().sendPasswordResetEmail(email);
+            Toast.show('Password reset email sent!');
             navigation.replace('Login');
         } catch (error) {
-            Toast.show('An error occurred while resetting the password');
+            console.error(error);
+            Toast.show('An error occurred while sending the reset email');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -66,50 +57,30 @@ const ForgotPassword = ({ navigation }) => {
                     <Image source={ImagesPath.arrowBack} style={styles.backIcon} />
                 </TouchableOpacity>
                 <View style={styles.header}>
-                    <Text style={styles.title1}>New Password</Text>
-                    <Text style={styles.subtitle}>Enter New Password</Text>
+                    <Text style={styles.title1}>Forgot Password</Text>
+                    <Text style={styles.subtitle}>Enter your email to receive a password reset link</Text>
                 </View>
                 <View style={[styles.inputContainer, { marginTop: keyboardOpen ? '10%' : '10%' }]}>
                     <View style={styles.inputWrapper}>
                         <View style={styles.inputIcon}>
-                            <Image source={ImagesPath.passwordImages} style={styles.icon} />
+                            <Image source={ImagesPath.emailImages} style={styles.icon} />
                         </View>
                         <TextInput
                             style={styles.input}
-                            placeholder="New Password"
-                            value={newPassword}
+                            placeholder="Email"
+                            value={email}
                             placeholderTextColor="black"
-                            onChangeText={setNewPassword}
-                            secureTextEntry={!showNewPassword}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
                         />
-                        <TouchableOpacity
-                            style={styles.passwordToggle}
-                            onPress={() => setShowNewPassword(!showNewPassword)}
-                        >
-                            <Image source={showNewPassword ? ImagesPath.eyeImage : ImagesPath.eyeSlashImage} />
-                        </TouchableOpacity>
                     </View>
-                    <View style={styles.inputWrapper}>
-                        <View style={styles.inputIcon}>
-                            <Image source={ImagesPath.passwordImages} style={styles.icon} />
-                        </View>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Confirm New Password"
-                            value={confirmPassword}
-                            placeholderTextColor="black"
-                            onChangeText={setConfirmPassword}
-                            secureTextEntry={!showConfirmPassword}
-                        />
-                        <TouchableOpacity
-                            style={styles.passwordToggle}
-                            onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                        >
-                            <Image source={showConfirmPassword ? ImagesPath.eyeImage : ImagesPath.eyeSlashImage} />
-                        </TouchableOpacity>
-                    </View>
-                    <TouchableOpacity style={styles.loginButton} onPress={handleNext}>
-                        <Text style={styles.loginButtonText}>Next</Text>
+                    <TouchableOpacity style={styles.loginButton} onPress={handleResetPassword}>
+                        {loading ? (
+                            <ActivityIndicator size="small" color="white" />
+                        ) : (
+                            <Text style={styles.loginButtonText}>Send Reset Link</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
             </View>
@@ -175,17 +146,21 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         paddingLeft: 35,
         color: 'black',
+        fontFamily: AppFonts.regular
     },
     title1: {
         fontSize: 32,
-        fontWeight: 'bold',
+        // fontWeight: 'bold',
         marginTop: 20,
-        color: '#114e95'
+        color: '#114e95',
+        fontFamily: AppFonts.bold
     },
     subtitle: {
         fontSize: 18,
         color: 'black',
         marginTop: 10,
+        textAlign: 'center',
+        fontFamily: AppFonts.regular
     },
     loginButton: {
         backgroundColor: '#114e95',
@@ -197,6 +172,7 @@ const styles = StyleSheet.create({
     loginButtonText: {
         color: 'white',
         fontSize: 18,
+        fontFamily: AppFonts.regular
     },
     passwordToggle: {
         position: 'absolute',
