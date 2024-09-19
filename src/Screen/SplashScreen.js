@@ -13,7 +13,7 @@ const SplashScreen = ({ navigation }) => {
         } else {
             const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
             if (isLoggedIn === 'true') {
-                navigation.replace('Home');
+                navigation.replace('BottomScreen');
             } else {
                 navigation.replace('Login');
             }

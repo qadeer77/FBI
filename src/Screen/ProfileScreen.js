@@ -32,12 +32,12 @@ const ProfileScreen = () => {
                         setProfile(userData);
 
                         if (userData.DOB) {
-                            const date = userData.DOB.toDate(); // Convert Firestore Timestamp to Date
+                            const date = userData.DOB.toDate(); 
                             setSelectedDate(date);
                         }
 
                         if (userData.creditCardExpiry) {
-                            const expiryDate = userData.creditCardExpiry.toDate(); // Convert Firestore Timestamp to Date
+                            const expiryDate = userData.creditCardExpiry.toDate();
                             setSelectedExpiryDate(expiryDate);
                         }
                     } else {
@@ -107,9 +107,9 @@ const ProfileScreen = () => {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            {/* <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                 <Image source={ImagesPath.backIcON} style={styles.backImage} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             <TouchableOpacity onPress={editing ? openCamera : () => { }}>
                 <Image source={{ uri: profile.imageUrl }} style={styles.profileImage} />

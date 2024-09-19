@@ -61,11 +61,12 @@ const Home = ({ navigation }) => {
     return (
         <View style={styles.container}>
             <View style={styles.headerContainer}>
-                <TouchableOpacity onPress={() => {
+                {/* <TouchableOpacity onPress={() => {
                     if (userData) {
                         navigation.navigate('ProfileScreen', { userData });
                     }
-                }}>
+                }}> */}
+                <TouchableOpacity >
                     {userData && userData.imageUrl ? (
                         <Image source={{ uri: userData.imageUrl }} style={styles.userImage} />
                     ) : (

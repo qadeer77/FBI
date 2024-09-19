@@ -63,7 +63,7 @@ const Login = ({ navigation }) => {
                 await AsyncStorage.setItem('isLoggedIn', 'true');
                 setEmail('');
                 setPassword('');
-                navigation.replace('Home')
+                navigation.replace('BottomScreen')
             } catch (error) {
                 if (error.code === 'auth/invalid-credential') {
                     console.log('The email address you entered does not exist in our records.');

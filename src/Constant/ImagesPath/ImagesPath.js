@@ -21,4 +21,11 @@ export const ImagesPath = {
     cardImage3: require(`../../Assets/cardImage3.png`),
     backIcON: require(`../../Assets/backIcON.png`),
     logoutIcon: require(`../../Assets/logoutIcon.webp`),
+    homeBlackImage: require(`../../Assets/homeBlackImage.png`),
+    homeWhiteImage: require(`../../Assets/homeWhiteImage.png`),
+    Profile: require(`../../Assets/Profile.png`),
+    profileBlack: require(`../../Assets/profileBlack.webp`),
+    feedbackBlack: require(`../../Assets/feedbackBlack.png`),
+    feedbackBlack: require(`../../Assets/feedbackBlack.png`),
+    feedbackWhite: require(`../../Assets/feedbackWhite.png`),
 }
