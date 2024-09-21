@@ -17,6 +17,7 @@ const ProfileScreen = () => {
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedExpiryDate, setSelectedExpiryDate] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const navigation = useNavigation();
 
     useEffect(() => {
@@ -32,7 +33,7 @@ const ProfileScreen = () => {
                         setProfile(userData);
 
                         if (userData.DOB) {
-                            const date = userData.DOB.toDate(); 
+                            const date = userData.DOB.toDate();
                             setSelectedDate(date);
                         }
 
@@ -103,6 +104,41 @@ const ProfileScreen = () => {
     const handleExpiryDateConfirm = (date) => {
         setSelectedExpiryDate(date);
         setShowExpiryPicker(false);
+    };
+
+
+    const handleDeleteProfile = async () => {
+        setDeleteLoading(true);
+        try {
+            const user = auth().currentUser;
+            if (user) {
+                await firestore().collection('users').doc(user.uid).delete();
+                await user.delete();
+                navigation.replace('Login')
+            }
+        } catch (error) {
+            console.error("Error deleting profile: ", error);
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
+    const confirmDeleteProfile = () => {
+        Alert.alert(
+            "Delete Profile",
+            "Are you sure you want to delete your profile? This action cannot be undone.",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel",
+                },
+                {
+                    text: "Yes, Delete",
+                    onPress: handleDeleteProfile,
+                    style: "destructive",
+                }
+            ]
+        );
     };
 
     return (
@@ -190,6 +226,13 @@ const ProfileScreen = () => {
                     <Text style={styles.editButtonText}>Edit Profile</Text>
                 </TouchableOpacity>
             )}
+            <TouchableOpacity style={styles.deleteButton} onPress={confirmDeleteProfile}>
+                {deleteLoading ? (
+                    <ActivityIndicator size="small" color="white" />
+                ) : (
+                    <Text style={styles.deleteButtonText}>Delete Profile</Text>
+                )}
+            </TouchableOpacity>
         </ScrollView>
     );
 };
@@ -275,6 +318,23 @@ const styles = StyleSheet.create({
         color: '#333',
         lineHeight: 50,
         justifyContent: 'center',
+    },
+    deleteButton: {
+        backgroundColor: '#ff4444',
+        paddingHorizontal: 30,
+        paddingVertical: 12,
+        borderRadius: 8,
+        marginTop: 20,
+        shadowColor: '#000',
+        shadowOpacity: 0.3,
+        shadowOffset: { width: 4, height: 4 },
+        shadowRadius: 6,
+    },
+    deleteButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontFamily: AppFonts.medium,
+        textAlign: 'center',
     },
 });
 
