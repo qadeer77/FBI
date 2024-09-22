@@ -55,7 +55,7 @@ const Images = () => {
                     const response = await fetch(image);
                     const blob = await response.blob();
                     // const ref = storage().ref(`images/${user.uid}/${Date.now()}`);
-                    const ref = storage().ref(`images/${Date.now()}`);
+                    const ref = storage().ref(`images/${user.uid}`);
                     await ref.put(blob);
 
                     const imageUrl = await ref.getDownloadURL();
